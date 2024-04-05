@@ -109,15 +109,15 @@ dims = [-1, -1, -1, 3]
 ### 3.0 Примеры представленные в репозитории 
 | [Простой пример](./simple_example/README.md) | [Пример ансамбля](./ensemble_model/README.md) |
 | --------------- | ------------ |
-### 3.1 Запуск контейнера и triton
+### 3.1 Загрузить onnx веса в model repository
+```bash
+source ./utils/yolo_export.sh
+```
+### 3.2 Запуск контейнера и triton
 ```bash
 docker run --rm -it --gpus=0 -p8000:8000 -p8001:8001 -p8002:8002 -v $(pwd)/model_repository:/models nvcr.io/nvidia/tritonserver:24.01-py3
 
 tritonserver --model-repository=/models
-```
-### 3.2 Загрузить onnx веса в model repository
-```bash
-source ./utils/yolo_export.sh
 ```
 
 ### 3.3 Отправка запроса через скрипт клиента
@@ -139,15 +139,57 @@ python client.py
 docker run -it --net=host -v ${PWD}:/workspace/ nvcr.io/nvidia/tritonserver:24.01-py3-sdk bash
 ```
 ### Performance Analyzer
-
-WORK IN PROGRESS!!
+Для использвание Perf Analyzer потребуется:
+1) Запустить Trition 
+```bash
+docker run --rm -it --gpus=0 --net=host -p8000:8000 -p8001:8001 -p8002:8002 -v $(pwd)/model_repository:/models nvcr.io/nvidia/tritonserver:24.01-py3
+```
+2) Запустить SDK контейнер
+```bash
+docker run -it --net=host -v ${PWD}:/workspace/ nvcr.io/nvidia/tritonserver:24.01-py3-sdk bash
+```
+3) Запустить Perf Analyzer
 ```bash
 # perf_analyzer -m <model name> -b <batch size> --shape <input layer>:<input shape> --concurrency-range <lower number of request>:<higher number of request>:<step>
 
 # Query
-perf_analyzer -m text_recognition -b 2 --shape input.1:1,32,100 --concurrency-range 2:16:2 --percentile=95
+perf_analyzer -m detection --shape images:3,640,640 --concurrency-range 2:6:2 --percentile=95
 ```
+по результатам анализа получается:
+```
+*** Measurement Settings ***
+  Batch size: 1
+  Service Kind: Triton
+  Using "time_windows" mode for stabilization
+  Measurement window: 5000 msec
+  Latency limit: 0 msec
+  Concurrency limit: 6 concurrent requests
+  Using synchronous calls for inference
+  Stabilizing using p95 latency
 
+    ...
+
+  Request concurrency: 6
+  Client: 
+    Request count: 4065
+    Throughput: 225.786 infer/sec
+    p50 latency: 23841 usec
+    p90 latency: 45345 usec
+    p95 latency: 63844 usec
+    p99 latency: 85863 usec
+    Avg HTTP time: 26553 usec (send/recv 4594 usec + response wait 21959 usec)
+  Server: 
+    Inference count: 4066
+    Execution count: 4066
+    Successful request count: 4066
+    Avg request latency: 15726 usec (overhead 24 usec + queue 7473 usec + compute input 719 usec + compute infer 6990 usec + compute output 519 usec)
+
+  Inferences/Second vs. Client p95 Batch Latency
+  Concurrency: 2, throughput: 163.593 infer/sec, latency 18085 usec
+  Concurrency: 4, throughput: 209.689 infer/sec, latency 35305 usec
+  Concurrency: 6, throughput: 225.786 infer/sec, latency 63844 usec
+
+```
 
 ### Model Analyzer
 1) Запустить Trition c explicit флагом

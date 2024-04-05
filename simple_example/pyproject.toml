@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "simple-example"
+version = "0.1.0"
+description = ""
+authors = ["Anton Zotov <antzotik@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+torch = {version = "^2.2.1+cu118", source = "pytorch"}
+torchvision = {version = "^0.17.1+cu118", source = "pytorch"}
+opencv-python-headless = "^4.9.0.80"
+tritonclient = {extras = ["all"], version = "^2.44.0"}
+pillow = "^10.3.0"
+ultralytics = "^8.1.24"
+
+[[tool.poetry.source]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,4 +1,3 @@
-
 import cv2
 import tritonclient.http as httpclient
 import numpy as np
